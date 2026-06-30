@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Schémas MongoDB — NosCités P7</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1117; color: #e0e0e0; padding: 40px 20px; }
+
+  h1 { text-align: center; font-size: 22px; color: #fff; margin-bottom: 8px; letter-spacing: 1px; }
+  .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 48px; }
+
+  .schema-section { max-width: 1100px; margin: 0 auto 72px auto; }
+  .schema-title {
+    font-size: 17px; font-weight: 700; color: #fff;
+    border-left: 4px solid #4A90D9; padding-left: 12px;
+    margin-bottom: 6px;
+  }
+  .schema-desc { color: #aaa; font-size: 13px; margin-bottom: 28px; padding-left: 16px; }
+
+  /* ── REPLICASET ── */
+  .rs-container {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; flex-wrap: wrap;
+  }
+  .rs-node {
+    width: 170px; border-radius: 12px; padding: 18px 14px 14px;
+    text-align: center; position: relative;
+  }
+  .rs-node.primary   { background: #1a3a5c; border: 2px solid #4A90D9; }
+  .rs-node.secondary { background: #1a3d2e; border: 2px solid #27ae60; }
+  .rs-node.arbiter   { background: #3a2a1a; border: 2px solid #e67e22; }
+
+  .rs-node .role {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .primary .role   { color: #4A90D9; }
+  .secondary .role { color: #27ae60; }
+  .arbiter .role   { color: #e67e22; }
+
+  .rs-node .icon { font-size: 28px; margin-bottom: 8px; display: block; }
+  .rs-node .port { font-size: 12px; font-family: monospace; color: #ccc; margin-bottom: 6px; }
+  .rs-node .detail { font-size: 11px; color: #888; line-height: 1.5; }
+  .rs-node .badge {
+    display: inline-block; margin-top: 8px;
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+  }
+  .primary .badge   { background: #4A90D9; color: #fff; }
+  .secondary .badge { background: #27ae60; color: #fff; }
+  .arbiter .badge   { background: #e67e22; color: #fff; }
+
+  /* arrows between RS nodes */
+  .rs-arrow {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; width: 60px; gap: 4px;
+  }
+  .rs-arrow .arrow-line {
+    width: 50px; height: 2px;
+    position: relative;
+  }
+  .rs-arrow .arr-repl { background: #4A90D9; }
+  .rs-arrow .arr-vote { background: #e67e22; }
+  .rs-arrow .arr-label { font-size: 9px; color: #888; text-align: center; white-space: nowrap; }
+
+  /* oplog box */
+  .oplog-box {
+    display: flex; justify-content: center; margin-top: 20px;
+  }
+  .oplog {
+    background: #1a1a2e; border: 1px dashed #4A90D9;
+    border-radius: 8px; padding: 10px 24px; text-align: center;
+  }
+  .oplog .title { font-size: 11px; color: #4A90D9; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+  .oplog .desc  { font-size: 11px; color: #888; }
+
+  /* quorum */
+  .quorum-row {
+    display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap;
+  }
+  .quorum-badge {
+    background: #1e1e1e; border-radius: 8px; padding: 10px 20px; text-align: center;
+    border: 1px solid #333;
+  }
+  .quorum-badge .qnum { font-size: 26px; font-weight: 700; }
+  .quorum-badge .qlab { font-size: 11px; color: #888; margin-top: 2px; }
+  .q-blue  { color: #4A90D9; border-color: #4A90D9 !important; }
+  .q-green { color: #27ae60; border-color: #27ae60 !important; }
+  .q-orange{ color: #e67e22; border-color: #e67e22 !important; }
+
+  /* write/read flow */
+  .flow-row {
+    display: flex; justify-content: center; gap: 16px; margin-top: 20px; flex-wrap: wrap;
+  }
+  .flow-card {
+    background: #1e1e1e; border-radius: 8px; padding: 12px 18px;
+    border-left: 3px solid; font-size: 12px; max-width: 260px;
+  }
+  .flow-card.write { border-color: #e74c3c; }
+  .flow-card.read  { border-color: #27ae60; }
+  .flow-card .fc-title { font-weight: 700; margin-bottom: 4px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  .flow-card.write .fc-title { color: #e74c3c; }
+  .flow-card.read  .fc-title { color: #27ae60; }
+  .flow-card .fc-body { color: #aaa; line-height: 1.6; }
+
+  /* ── SHARDING ── */
+  .shard-container { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+  /* Client */
+  .sh-client {
+    background: #2a2a2a; border: 2px solid #888; border-radius: 10px;
+    padding: 12px 32px; text-align: center; font-size: 13px; font-weight: 600;
+  }
+  .sh-client .cl-sub { font-size: 11px; color: #888; margin-top: 2px; }
+
+  /* vertical connector */
+  .sh-vline {
+    width: 2px; height: 28px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .sh-vline-inner { width: 2px; height: 100%; background: #555; }
+  .sh-vline .arr { color: #555; font-size: 14px; margin-top: -6px; }
+
+  /* mongos */
+  .sh-mongos {
+    background: #1a2a3a; border: 2px solid #4A90D9;
+    border-radius: 12px; padding: 16px 40px; text-align: center;
+    position: relative;
+  }
+  .sh-mongos .mg-title { font-size: 15px; font-weight: 700; color: #4A90D9; }
+  .sh-mongos .mg-port  { font-size: 12px; font-family: monospace; color: #aaa; margin: 4px 0; }
+  .sh-mongos .mg-sub   { font-size: 11px; color: #888; }
+
+  /* cfgRS */
+  .sh-cfgrs {
+    display: flex; align-items: center; gap: 8px;
+    background: #2a1a3a; border: 1px dashed #9b59b6;
+    border-radius: 10px; padding: 8px 16px; margin-top: 12px;
+    font-size: 12px;
+  }
+  .sh-cfgrs .cfg-label { color: #9b59b6; font-weight: 700; font-size: 11px; }
+  .sh-cfgrs .cfg-nodes { font-family: monospace; color: #aaa; font-size: 11px; }
+
+  /* shard row */
+  .sh-shards-row {
+    display: flex; align-items: flex-start; justify-content: center;
+    gap: 48px; margin-top: 8px; flex-wrap: wrap;
+  }
+  .sh-shard {
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+  .sh-hline {
+    width: 100%; height: 2px; background: #555; position: relative; margin: 0;
+  }
+
+  .sh-shard-box {
+    border-radius: 12px; padding: 16px 20px; text-align: center; width: 200px;
+  }
+  .sh-shard-box.paris { background: #1a3a5c; border: 2px solid #4A90D9; }
+  .sh-shard-box.lyon  { background: #3a2a1a; border: 2px solid #e67e22; }
+
+  .sh-shard-box .sd-name  { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .sh-shard-box.paris .sd-name { color: #4A90D9; }
+  .sh-shard-box.lyon  .sd-name { color: #e67e22; }
+  .sh-shard-box .sd-port  { font-size: 12px; font-family: monospace; color: #aaa; margin-bottom: 8px; }
+  .sh-shard-box .sd-zone  {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 10px; border-radius: 10px; margin-bottom: 8px;
+  }
+  .paris .sd-zone { background: #4A90D9; color: #fff; }
+  .lyon  .sd-zone { background: #e67e22; color: #fff; }
+  .sh-shard-box .sd-stats { font-size: 11px; color: #aaa; line-height: 1.6; }
+  .sh-shard-box .sd-key   { font-size: 11px; font-family: monospace; color: #888; margin-top: 6px; }
+
+  /* shard key explanation */
+  .shard-key-row {
+    display: flex; justify-content: center; gap: 16px; margin-top: 24px; flex-wrap: wrap;
+  }
+  .sk-card {
+    background: #1e1e1e; border-radius: 8px; padding: 12px 18px;
+    border: 1px solid #333; font-size: 12px; max-width: 280px; text-align: center;
+  }
+  .sk-card .sk-title { font-weight: 700; color: #4A90D9; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .sk-card .sk-code  { font-family: monospace; background: #111; padding: 6px 12px; border-radius: 4px; color: #f0c040; font-size: 13px; margin-bottom: 6px; display: block; }
+  .sk-card .sk-desc  { color: #888; line-height: 1.5; font-size: 11px; }
+
+  /* routing example */
+  .routing-row {
+    display: flex; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap;
+  }
+  .rt-card {
+    background: #1e1e1e; border-radius: 8px; padding: 10px 16px;
+    border-left: 3px solid; font-size: 12px;
+  }
+  .rt-card.rt-paris { border-color: #4A90D9; }
+  .rt-card.rt-lyon  { border-color: #e67e22; }
+  .rt-card.rt-all   { border-color: #888; }
+  .rt-card .rt-query { font-family: monospace; font-size: 12px; }
+  .rt-paris .rt-query { color: #4A90D9; }
+  .rt-lyon  .rt-query { color: #e67e22; }
+  .rt-all   .rt-query { color: #888; }
+  .rt-card .rt-arrow { color: #555; margin: 2px 0; }
+  .rt-card .rt-dest  { font-size: 11px; color: #aaa; }
+
+  /* divider */
+  .divider { border: none; border-top: 1px solid #222; margin: 0 0 48px 0; max-width: 1100px; margin-left: auto; margin-right: auto; }
+
+  /* persistence box */
+  .persist-box {
+    max-width: 900px; margin: 0 auto;
+    background: #161616; border: 1px solid #333; border-radius: 12px; padding: 24px 32px;
+  }
+  .persist-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 16px; text-align: center; }
+  .persist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .persist-item { background: #1e1e1e; border-radius: 8px; padding: 10px 14px; border-left: 3px solid; }
+  .persist-item.p-rs    { border-color: #4A90D9; }
+  .persist-item.p-shard { border-color: #27ae60; }
+  .persist-item.p-cfg   { border-color: #9b59b6; }
+  .persist-item .pi-path { font-family: monospace; font-size: 11px; color: #f0c040; margin-bottom: 4px; }
+  .persist-item .pi-desc { font-size: 11px; color: #888; }
+
+  .footnote { text-align: center; color: #555; font-size: 11px; margin-top: 48px; }
+
+  /* SVG arrows */
+  svg.arr-svg { overflow: visible; }
+</style>
+</head>
+<body>
+
+<h1>Schémas MongoDB — Projet NosCités P7</h1>
+<p class="subtitle">Réplication &amp; Sharding — Architecture locale WSL2</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCHÉMA 1 — REPLICASET                      -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="schema-section">
+  <div class="schema-title">① Réplication — ReplicaSet noscitesRS (4 nœuds)</div>
+  <p class="schema-desc">Garantit la haute disponibilité : si le PRIMARY tombe, une élection automatique désigne un nouveau PRIMARY parmi les SECONDARY.</p>
+
+  <!-- Nodes -->
+  <div class="rs-container">
+
+    <div class="rs-node primary">
+      <div class="role">PRIMARY</div>
+      <span class="icon">🖥️</span>
+      <div class="port">:27017</div>
+      <div class="detail">Reçoit toutes les<br>écritures</div>
+      <span class="badge">Priorité 2</span>
+    </div>
+
+    <div class="rs-arrow">
+      <div class="arr-label">oplog →</div>
+      <div class="arrow-line arr-repl"></div>
+      <div class="arr-label">← vote</div>
+      <div class="arrow-line arr-vote"></div>
+    </div>
+
+    <div class="rs-node secondary">
+      <div class="role">SECONDARY 1</div>
+      <span class="icon">🖥️</span>
+      <div class="port">:27018</div>
+      <div class="detail">Réplique en temps<br>réel via oplog</div>
+      <span class="badge">Priorité 1</span>
+    </div>
+
+    <div class="rs-arrow">
+      <div class="arr-label">oplog →</div>
+      <div class="arrow-line arr-repl"></div>
+      <div class="arr-label">← vote</div>
+      <div class="arrow-line arr-vote"></div>
+    </div>
+
+    <div class="rs-node secondary">
+      <div class="role">SECONDARY 2</div>
+      <span class="icon">🖥️</span>
+      <div class="port">:27019</div>
+      <div class="detail">Réplique en temps<br>réel via oplog</div>
+      <span class="badge">Priorité 1</span>
+    </div>
+
+    <div class="rs-arrow">
+      <div class="arr-label" style="color:#e67e22">vote →</div>
+      <div class="arrow-line arr-vote"></div>
+      <div class="arr-label" style="color:#e67e22">← vote</div>
+      <div class="arrow-line arr-vote"></div>
+    </div>
+
+    <div class="rs-node arbiter">
+      <div class="role">ARBITRE</div>
+      <span class="icon">⚖️</span>
+      <div class="port">:27020</div>
+      <div class="detail">Vote uniquement.<br>Pas de données.</div>
+      <span class="badge">Vote seul</span>
+    </div>
+
+  </div>
+
+  <!-- Oplog -->
+  <div class="oplog-box" style="margin-top:24px;">
+    <div class="oplog">
+      <div class="title">📋 OPLOG (Operations Log)</div>
+      <div class="desc">Journal ordonné de toutes les opérations d'écriture du PRIMARY.<br>
+      Les SECONDARY lisent l'oplog en continu pour rester synchronisés.</div>
+    </div>
+  </div>
+
+  <!-- Quorum -->
+  <div class="quorum-row">
+    <div class="quorum-badge q-blue">
+      <div class="qnum">4</div>
+      <div class="qlab">nœuds total</div>
+    </div>
+    <div class="quorum-badge q-green">
+      <div class="qnum">3/4</div>
+      <div class="qlab">quorum de vote</div>
+    </div>
+    <div class="quorum-badge q-orange">
+      <div class="qnum">1</div>
+      <div class="qlab">arbitre (vote sans données)</div>
+    </div>
+  </div>
+
+  <!-- Write / Read flow -->
+  <div class="flow-row">
+    <div class="flow-card write">
+      <div class="fc-title">✍️ Écriture</div>
+      <div class="fc-body">
+        Application → <strong>PRIMARY</strong> uniquement<br>
+        PRIMARY écrit → oplog<br>
+        SECONDARYs lisent l'oplog et appliquent
+      </div>
+    </div>
+    <div class="flow-card read">
+      <div class="fc-title">📖 Lecture</div>
+      <div class="fc-body">
+        Par défaut → <strong>PRIMARY</strong><br>
+        Optionnel → SECONDARY (readPreference)<br>
+        → Réduit la charge sur le PRIMARY
+      </div>
+    </div>
+    <div class="flow-card" style="border-color:#9b59b6;">
+      <div class="fc-title" style="color:#9b59b6;">⚡ Élection automatique</div>
+      <div class="fc-body">
+        Si PRIMARY tombe → vote entre nœuds<br>
+        Quorum 3/4 requis pour élire<br>
+        → Nouveau PRIMARY en ~10 secondes
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCHÉMA 2 — SHARDING                        -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="schema-section">
+  <div class="schema-title">② Sharding — Distribution géographique Paris / Lyon</div>
+  <p class="schema-desc">Distribue les données sur plusieurs serveurs selon une shard key. mongos route automatiquement chaque requête vers le bon shard.</p>
+
+  <div class="shard-container">
+
+    <!-- Client -->
+    <div class="sh-client">
+      🧑‍💻 Application / mongosh
+      <div class="cl-sub">se connecte uniquement à mongos</div>
+    </div>
+
+    <!-- Arrow down -->
+    <div style="display:flex;flex-direction:column;align-items:center;margin:4px 0;">
+      <div style="width:2px;height:20px;background:#555;"></div>
+      <div style="color:#555;font-size:16px;margin-top:-4px;">▼</div>
+    </div>
+
+    <!-- mongos -->
+    <div class="sh-mongos">
+      <div class="mg-title">⚡ mongos — Routeur de requêtes</div>
+      <div class="mg-port">localhost:27029</div>
+      <div class="mg-sub">Lit les métadonnées dans cfgRS → route vers le bon shard</div>
+    </div>
+
+    <!-- cfgRS -->
+    <div class="sh-cfgrs">
+      <span style="font-size:18px;">📁</span>
+      <div>
+        <div class="cfg-label">Config Server RS (cfgRS) — 3 nœuds</div>
+        <div class="cfg-nodes">:27024 | :27025 | :27026 — Métadonnées des chunks &amp; zones</div>
+      </div>
+    </div>
+
+    <!-- Horizontal arrows to shards -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:80px;margin:8px 0;">
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="width:2px;height:16px;background:#4A90D9;"></div>
+        <div style="color:#4A90D9;font-size:14px;margin-top:-4px;">▼</div>
+        <div style="font-size:10px;color:#4A90D9;margin-top:2px;">city=&quot;Paris&quot;</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="width:2px;height:16px;background:#e67e22;"></div>
+        <div style="color:#e67e22;font-size:14px;margin-top:-4px;">▼</div>
+        <div style="font-size:10px;color:#e67e22;margin-top:2px;">city=&quot;Lyon&quot;</div>
+      </div>
+    </div>
+
+    <!-- Shards -->
+    <div class="sh-shards-row">
+
+      <div class="sh-shard-box paris">
+        <div class="sd-name">🗼 shardParis</div>
+        <div class="sd-port">localhost:27027</div>
+        <span class="sd-zone">Zone PARIS</span>
+        <div class="sd-stats">
+          <strong>95 885</strong> documents<br>
+          328,49 MiB<br>
+          <span style="color:#4A90D9;">90,78%</span> du cluster
+        </div>
+        <div class="sd-key">city = "Paris"</div>
+      </div>
+
+      <div class="sh-shard-box lyon">
+        <div class="sd-name">🦁 shardLyon</div>
+        <div class="sd-port">localhost:27028</div>
+        <span class="sd-zone">Zone LYON</span>
+        <div class="sd-stats">
+          <strong>9 973</strong> documents<br>
+          33,33 MiB<br>
+          <span style="color:#e67e22;">9,21%</span> du cluster
+        </div>
+        <div class="sd-key">city = "Lyon"</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Shard key explanation -->
+  <div class="shard-key-row" style="margin-top:32px;">
+    <div class="sk-card">
+      <div class="sk-title">🔑 Shard Key choisie</div>
+      <span class="sk-code">{ city: 1, _id: 1 }</span>
+      <div class="sk-desc">Clé <strong>composée</strong> — l'ajout de <code>_id</code> évite les <em>jumbo chunks</em> : sans lui, tous les docs Paris auraient la même clé et MongoDB ne pourrait pas fragmenter les données.</div>
+    </div>
+    <div class="sk-card">
+      <div class="sk-title">🗺️ Zone Sharding</div>
+      <span class="sk-code">PARIS → shardParis<br>LYON  → shardLyon</span>
+      <div class="sk-desc">Les <strong>zones</strong> garantissent que les données d'une ville restent toujours sur le shard dédié — même après un rebalancement automatique du cluster.</div>
+    </div>
+    <div class="sk-card">
+      <div class="sk-title">📦 Chunks</div>
+      <span class="sk-code">5 chunks total<br>Paris: 1 | Lyon: 4</span>
+      <div class="sk-desc">Un chunk = une plage de shard key. Le <strong>balancer</strong> déplace automatiquement les chunks entre shards pour équilibrer la charge.</div>
+    </div>
+  </div>
+
+  <!-- Routing examples -->
+  <div style="text-align:center;margin-top:28px;font-size:12px;color:#888;margin-bottom:10px;">Exemples de routage automatique par mongos :</div>
+  <div class="routing-row">
+    <div class="rt-card rt-paris">
+      <div class="rt-query">db.listings.find({city:"Paris"})</div>
+      <div class="rt-arrow">↓</div>
+      <div class="rt-dest">→ <strong>shardParis uniquement</strong> (targeted query)</div>
+    </div>
+    <div class="rt-card rt-lyon">
+      <div class="rt-query">db.listings.find({city:"Lyon"})</div>
+      <div class="rt-arrow">↓</div>
+      <div class="rt-dest">→ <strong>shardLyon uniquement</strong> (targeted query)</div>
+    </div>
+    <div class="rt-card rt-all">
+      <div class="rt-query">db.listings.countDocuments()</div>
+      <div class="rt-arrow">↓</div>
+      <div class="rt-dest">→ <strong>tous les shards</strong> (scatter-gather) → merge</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCHÉMA 3 — PERSISTANCE DES DONNÉES         -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="schema-section">
+  <div class="schema-title">③ Persistance — Où sont les données après redémarrage ?</div>
+  <p class="schema-desc">MongoDB écrit les données sur disque via WiredTiger. Les processus s'arrêtent mais les fichiers restent. <code>start_mongodb.sh</code> relance les processus — aucun réimport nécessaire.</p>
+
+  <div class="persist-box">
+    <div class="persist-title">~/mongodb/ — Répertoires de données persistants</div>
+    <div class="persist-grid">
+      <div class="persist-item p-rs">
+        <div class="pi-path">~/mongodb/rs0/</div>
+        <div class="pi-desc">PRIMARY :27017<br>Données ReplicaSet</div>
+      </div>
+      <div class="persist-item p-rs">
+        <div class="pi-path">~/mongodb/rs1/</div>
+        <div class="pi-desc">SECONDARY 1 :27018<br>Réplique complète</div>
+      </div>
+      <div class="persist-item p-rs">
+        <div class="pi-path">~/mongodb/rs2/</div>
+        <div class="pi-desc">SECONDARY 2 :27019<br>Réplique complète</div>
+      </div>
+      <div class="persist-item p-rs">
+        <div class="pi-path">~/mongodb/rs3/</div>
+        <div class="pi-desc">ARBITRE :27020<br>Vide (vote seul)</div>
+      </div>
+      <div class="persist-item p-shard">
+        <div class="pi-path">~/mongodb/shard_paris/</div>
+        <div class="pi-desc">shardParis :27027<br>95 885 docs Paris</div>
+      </div>
+      <div class="persist-item p-shard">
+        <div class="pi-path">~/mongodb/shard_lyon/</div>
+        <div class="pi-desc">shardLyon :27028<br>9 973 docs Lyon</div>
+      </div>
+      <div class="persist-item p-cfg">
+        <div class="pi-path">~/mongodb/cfg0-2/</div>
+        <div class="pi-desc">cfgRS :27024-27026<br>Métadonnées cluster</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;text-align:center;font-size:12px;color:#666;">
+      Moteur de stockage : <span style="color:#f0c040;font-family:monospace;">WiredTiger</span>
+      &nbsp;|&nbsp; Fichiers : <span style="color:#f0c040;font-family:monospace;">.wt</span>
+      &nbsp;|&nbsp; Journal de transactions activé par défaut
+    </div>
+  </div>
+</div>
+
+<p class="footnote">NosCités P7 — MongoDB 8.0.19 | WSL2 | Réplication + Sharding | 2026</p>
+
+</body>
+</html>

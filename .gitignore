@@ -1,0 +1,13 @@
+# Données (non publiées)
+*.csv
+data/
+# Traces & brouillons
+CLAUDE.md
+.claude/
+graphify-out/
+.graphify*/
+tasks/
+*.zip
+journal.md
+JOURNAL.md
+__pycache__/
