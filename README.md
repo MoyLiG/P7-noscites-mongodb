@@ -40,7 +40,15 @@ Python (requêtes).
   application).
 - Requêtes analytiques et requêtes adaptées au sharding
   (`requetes_complexes.py`, `requetes_complexes_sharding.py`).
-- Restitution Tableau (`Classeur1.twb`) et dictionnaire de données.
+- Restitution Tableau et dictionnaire de données.
+
+## Restitution Tableau
+
+![Dashboard Tableau — Analyse Airbnb Paris & Lyon](docs/dashboard-tableau.png)
+
+Cinq vues sur une comparaison Paris / Lyon : répartition des annonces, types de
+logements, top 10 des quartiers parisiens, part de superhôtes et disponibilité
+moyenne sur l'année.
 
 ## Contenu
 
@@ -50,11 +58,16 @@ start|status|stop_mongodb.sh             cycle de vie du cluster local
 requetes_complexes*.py                   requêtes MongoDB (dont sharding)
 schemas_mongodb.html                     schémas des collections
 Data+Dictionary+(1).xlsx                 dictionnaire de données
+docs/dashboard-tableau.png               rendu du dashboard (ci-dessus)
+Classeur1.twb                            classeur Tableau source
 rapport_projet_P7_v4.docx                rapport du projet
 ```
 
 > Les jeux de données (CSV Airbnb, plusieurs centaines de Mo) ne sont pas
 > versionnés. Sources : Inside Airbnb (Paris, Lyon).
+>
+> `Classeur1.twb` est le classeur **source** : il attend le CSV extrait de
+> MongoDB, non versionné pour la même raison. Le rendu est l'image ci-dessus.
 
 ---
 
