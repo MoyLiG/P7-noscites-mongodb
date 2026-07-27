@@ -35,6 +35,16 @@ nouveau en 10 à 30 secondes.
 nœuds) porte les métadonnées. Chaque shard ne reçoit que les chunks de sa zone :
 **95 885 documents Paris (328 MiB)** contre **9 973 documents Lyon (33 MiB)**.
 
+### En bref
+
+```
+ReplicaSet noscitesRS : rs0 (PRIMARY) | rs1 | rs2 | rs3 (arbitre)
+
+Cluster shardé : cfgRS (config servers) → mongos (routeur)
+   ├── shardParis → 95 885 docs Paris (90,8 %)
+   └── shardLyon  →  9 973 docs Lyon  ( 9,2 %)
+```
+
 ## Stack
 
 MongoDB (replica set, sharding, config servers, mongos) · WSL2 · Tableau ·
