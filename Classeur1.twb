@@ -26,7 +26,7 @@
       <connection class='federated'>
         <named-connections>
           <named-connection caption='noscites_tableau' name='textscan.0n8of5a0rezd3219v902e0kvnexx'>
-            <connection class='textscan' directory='C:/Users/moymo/OC/P7' filename='noscites_tableau.csv' password='' server='' />
+            <connection class='textscan' directory='.' filename='noscites_tableau.csv' password='' server='' />
           </named-connection>
         </named-connections>
         <relation connection='textscan.0n8of5a0rezd3219v902e0kvnexx' name='noscites_tableau.csv' table='[noscites_tableau#csv]' type='table'>
@@ -270,7 +270,7 @@
       <column-instance column='[city]' derivation='None' name='[none:city:nk]' pivot='key' type='nominal' />
       <column-instance column='[neighbourhood_cleansed]' derivation='None' name='[none:neighbourhood_cleansed:nk]' pivot='key' type='nominal' />
       <extract _.fcp.VConnDownstreamExtractsWithWarnings.true...user-specific='false' count='-1' enabled='true' object-id='' units='records'>
-        <connection access_mode='readonly' author-locale='fr_FR' class='hyper' dbname='C:/Users/moymo/AppData/Local/Temp/TableauTemp/#TableauTemp_0z5657x03t77cr10nfm0p09zsd4j.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract' update-time='03/17/2026 08:03:44 PM' username='tableau_internal_user'>
+        <connection access_mode='readonly' author-locale='fr_FR' class='hyper' dbname='Extract.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract' update-time='03/17/2026 08:03:44 PM' username='tableau_internal_user'>
           <relation name='Extract' table='[Extract].[Extract]' type='table' />
           <metadata-records>
             <metadata-record class='column'>
