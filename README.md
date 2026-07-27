@@ -19,13 +19,21 @@ Deux briques MongoDB :
 - **Cluster shardé** — partitionnement horizontal par ville (`city` comme shard
   key, zones dédiées), routeur `mongos` et config servers.
 
-```
-ReplicaSet noscitesRS : rs0 (PRIMARY) | rs1 | rs2 | rs3 (arbitre)
+### Haute disponibilité — ReplicaSet `noscitesRS`
 
-Cluster shardé : cfgRS (config servers) → mongos (routeur)
-   ├── shardParis → 95 885 docs Paris (90,8 %)
-   └── shardLyon  →  9 973 docs Lyon  ( 9,2 %)
-```
+![ReplicaSet MongoDB : PRIMARY 27017, deux SECONDARY 27018/27019 et un arbitre 27020, avec le quorum RAFT](docs/slides/replicaset-architecture.png)
+
+Quatre membres, trois votants. Le cluster tolère la perte d'un votant avant de
+passer en lecture seule. Si le PRIMARY tombe, une élection RAFT en désigne un
+nouveau en 10 à 30 secondes.
+
+### Distribution — sharding par zone géographique
+
+![Architecture shardée : client vers mongos 27029, config servers cfgRS, shardParis 27027 et shardLyon 27028 avec leurs zones](docs/slides/sharding-architecture.png)
+
+`mongos` route sans stocker de données, `cfgRS` (lui-même un ReplicaSet à trois
+nœuds) porte les métadonnées. Chaque shard ne reçoit que les chunks de sa zone :
+**95 885 documents Paris (328 MiB)** contre **9 973 documents Lyon (33 MiB)**.
 
 ## Stack
 
@@ -59,6 +67,8 @@ requetes_complexes*.py                   requêtes MongoDB (dont sharding)
 schemas_mongodb.html                     schémas des collections
 Data+Dictionary+(1).xlsx                 dictionnaire de données
 docs/dashboard-tableau.png               rendu du dashboard (ci-dessus)
+docs/slides/                             schemas d'architecture (ci-dessus)
+docs/Le_Gall_Morgan_support_032026.pdf   support de soutenance complet
 Classeur1.twb                            classeur Tableau source
 rapport_projet_P7_v4.docx                rapport du projet
 ```
