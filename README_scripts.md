@@ -43,7 +43,7 @@
 
 ```bash
 # 1. Ouvrir WSL2 et se placer dans le dossier P7
-cd /mnt/c/Users/moymo/OC/P7
+cd /chemin/vers/P7   # sous WSL2, p.ex. un dossier monte /mnt/c/.../P7
 
 # 2. Démarrer tous les services
 bash start_mongodb.sh
